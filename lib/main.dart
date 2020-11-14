@@ -46,17 +46,23 @@ class MainScreen extends StatelessWidget {
                       leading: Icon(Icons.audiotrack, color: Colors.red),
                     title: Text(track.title),
                     onTap: () {
-                      // TODO CLICK HANDLING
                       print("item clicked ${track.id}");
-                      AudioService.start(
-                        backgroundTaskEntrypoint: _audioPlayerTaskEntrypoint,
-                        androidNotificationChannelName: 'Audio Service Demo',
-                        // Enable this if you want the Android service to exit the foreground state on pause.
-                        //androidStopForegroundOnPause: true,
-                        androidNotificationColor: 0xFF2196f3,
-                        androidNotificationIcon: 'mipmap/ic_launcher',
-                        androidEnableQueue: true,
-                      );
+                      if (AudioService.running) {
+                        AudioService.playMediaItem(track);
+                      } else {
+                        AudioService.start(
+                          backgroundTaskEntrypoint: _audioPlayerTaskEntrypoint,
+                          androidNotificationChannelName: 'Audio Service Demo',
+                          // Enable this if you want the Android service to exit the foreground state on pause.
+                          androidStopForegroundOnPause: true,
+                          androidNotificationColor: 0xFF2196f3,
+                          androidNotificationIcon: 'mipmap/ic_launcher',
+                          androidEnableQueue: true,
+                          params: {
+                            "trackId": track.id
+                          }
+                        );
+                      }
                     },
                   );
                 }),
@@ -336,7 +342,6 @@ void _audioPlayerTaskEntrypoint() async {
   AudioServiceBackground.run(() => AudioPlayerTask());
 }
 
-/// This task defines logic for playing a list of podcast episodes.
 class AudioPlayerTask extends BackgroundAudioTask {
   AudioPlayer _player = new AudioPlayer();
   AudioProcessingState _skipState;
@@ -352,9 +357,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onStart(Map<String, dynamic> params) async {
-    // We configure the audio session for speech since we're playing a podcast.
-    // You can also put this in your app's initialisation if your app doesn't
-    // switch between two types of audio as this example does.
     final session = await AudioSession.instance;
     await session.configure(AudioSessionConfiguration.speech());
     // Broadcast media item changes.
@@ -390,7 +392,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
         queue.map((item) => AudioSource.uri(Uri.parse(item.id))).toList(),
       ));
       // In this example, we automatically start playing on start.
-      onPlay();
+      String firstItemId = params["trackId"];
+      MediaItem trackToPlay = queue.firstWhere((element) => element.id == firstItemId);
+      onPlayFromMediaId(trackToPlay.id);
     } catch (e) {
       print("Error: $e");
       onStop();
@@ -439,6 +443,21 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onSeekBackward(bool begin) async => _seekContinuously(begin, -1);
+
+  @override
+  Future<void> onPlayMediaItem(MediaItem mediaItem) {
+    int newIndex = queue.indexOf(mediaItem);
+    _player.seek(Duration.zero, index: newIndex);
+    _player.play();
+  }
+
+  @override
+  Future<void> onPlayFromMediaId(String mediaId) {
+    MediaItem trackToPlay = queue.firstWhere((element) => element.id == mediaId);
+    int newIndex = queue.indexOf(trackToPlay);
+    _player.seek(Duration.zero, index: newIndex);
+    _player.play();
+  }
 
   @override
   Future<void> onStop() async {
