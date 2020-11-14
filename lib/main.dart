@@ -26,129 +26,168 @@ class MyApp extends StatelessWidget {
 class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    List<MediaItem> _items = getFirstBookItems();
     return Scaffold(
       appBar: AppBar(
         title: const Text('Synope audio'),
       ),
-      body: Center(
-        child: StreamBuilder<bool>(
-          stream: AudioService.runningStream,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.active) {
-              // Don't show anything until we've ascertained whether or not the
-              // service is running, since we want to show a different UI in
-              // each case.
-              return SizedBox();
-            }
-            final running = snapshot.data ?? false;
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (!running) ...[
-                  // UI to show when we're not running, i.e. a menu.
-                  audioPlayerButton()
-                ] else ...[
-                  // UI to show when we're running, i.e. player state/controls.
+      body: Column(
+        children: <Widget>[
+          Expanded(
+            child: ListView.separated(
+                itemCount: _items.length,
+                separatorBuilder: (BuildContext context, int index) =>
+                    Divider(),
+                itemBuilder: (BuildContext context, int index) {
+                  var track = _items[index];
+                  return ListTile(
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                      leading: Icon(Icons.audiotrack, color: Colors.red),
+                    title: Text(track.title),
+                    onTap: () {
+                      // TODO CLICK HANDLING
+                      print("item clicked ${track.id}");
+                      AudioService.start(
+                        backgroundTaskEntrypoint: _audioPlayerTaskEntrypoint,
+                        androidNotificationChannelName: 'Audio Service Demo',
+                        // Enable this if you want the Android service to exit the foreground state on pause.
+                        //androidStopForegroundOnPause: true,
+                        androidNotificationColor: 0xFF2196f3,
+                        androidNotificationIcon: 'mipmap/ic_launcher',
+                        androidEnableQueue: true,
+                      );
+                    },
+                  );
+                }),
+          ),
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            elevation: 5,
+            margin: EdgeInsets.only(
+              right: 10,
+              left: 10,
+              bottom: 10
+            ),
+            child: Center(
+              child: StreamBuilder<bool>(
+                stream: AudioService.runningStream,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.active) {
+                    // Don't show anything until we've ascertained whether or not the
+                    // service is running, since we want to show a different UI in
+                    // each case.
+                    return SizedBox();
+                  }
+                  final running = snapshot.data ?? false;
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (!running) ...[
+                        // UI to show when we're not running, i.e. a menu.
+                        // audioPlayerButton()
+                      ] else ...[
+                        // UI to show when we're running, i.e. player state/controls.
 
-                  // Queue display/controls.
-                  StreamBuilder<QueueState>(
-                    stream: _queueStateStream,
-                    builder: (context, snapshot) {
-                      final queueState = snapshot.data;
-                      final queue = queueState?.queue ?? [];
-                      final mediaItem = queueState?.mediaItem;
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (queue != null && queue.isNotEmpty)
-                            Row(
+                        // Queue display/controls.
+                        StreamBuilder<QueueState>(
+                          stream: _queueStateStream,
+                          builder: (context, snapshot) {
+                            final queueState = snapshot.data;
+                            final queue = queueState?.queue ?? [];
+                            final mediaItem = queueState?.mediaItem;
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (queue != null && queue.isNotEmpty)
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(Icons.skip_previous),
+                                        iconSize: 64.0,
+                                        color: Colors.red,
+                                        onPressed: mediaItem == queue.first
+                                            ? null
+                                            : AudioService.skipToPrevious,
+                                      ),
+                                      IconButton(
+                                          icon: Icon(Icons.skip_next),
+                                          iconSize: 64.0,
+                                          onPressed: () {
+                                            AudioService.setSpeed(0.2);
+                                          }
+                                      ),
+                                    ],
+                                  ),
+                                if (mediaItem?.title != null) Text(mediaItem.title),
+                              ],
+                            );
+                          },
+                        ),
+                        // Play/pause/stop buttons.
+                        StreamBuilder<bool>(
+                          stream: AudioService.playbackStateStream
+                              .map((state) => state.playing)
+                              .distinct(),
+                          builder: (context, snapshot) {
+                            final playing = snapshot.data ?? false;
+                            return Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                IconButton(
-                                  icon: Icon(Icons.skip_previous),
-                                  iconSize: 64.0,
-                                  onPressed: mediaItem == queue.first
-                                      ? null
-                                      : AudioService.skipToPrevious,
-                                ),
-                                IconButton(
-                                    icon: Icon(Icons.skip_next),
-                                    iconSize: 64.0,
-                                    onPressed: () {
-                                      AudioService.setSpeed(0.2);
-                                    }
-                                ),
+                                if (playing) pauseButton() else playButton(),
+                                stopButton(),
                               ],
-                            ),
-                          if (mediaItem?.title != null) Text(mediaItem.title),
-                        ],
-                      );
-                    },
-                  ),
-                  // Play/pause/stop buttons.
-                  StreamBuilder<bool>(
-                    stream: AudioService.playbackStateStream
-                        .map((state) => state.playing)
-                        .distinct(),
-                    builder: (context, snapshot) {
-                      final playing = snapshot.data ?? false;
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          if (playing) pauseButton() else playButton(),
-                          stopButton(),
-                        ],
-                      );
-                    },
-                  ),
-                  // A seek bar.
-                  StreamBuilder<MediaState>(
-                    stream: _mediaStateStream,
-                    builder: (context, snapshot) {
-                      final mediaState = snapshot.data;
-                      return SeekBar(
-                        duration:
-                        mediaState?.mediaItem?.duration ?? Duration.zero,
-                        position: mediaState?.position ?? Duration.zero,
-                        onChangeEnd: (newPosition) {
-                          AudioService.seekTo(newPosition);
-                        },
-                      );
-                    },
-                  ),
-                  // Display the processing state.
-                  StreamBuilder<AudioProcessingState>(
-                    stream: AudioService.playbackStateStream
-                        .map((state) => state.processingState)
-                        .distinct(),
-                    builder: (context, snapshot) {
-                      final processingState =
-                          snapshot.data ?? AudioProcessingState.none;
-                      return Text(
-                          "Processing state: ${describeEnum(processingState)}");
-                    },
-                  ),
-                  // Display the latest custom event.
-                  StreamBuilder(
-                    stream: AudioService.customEventStream,
-                    builder: (context, snapshot) {
-                      return Text("custom event: ${snapshot.data}");
-                    },
-                  ),
-                  // Display the notification click status.
-                  StreamBuilder<bool>(
-                    stream: AudioService.notificationClickEventStream,
-                    builder: (context, snapshot) {
-                      return Text(
-                        'Notification Click Status: ${snapshot.data}',
-                      );
-                    },
-                  ),
-                ],
-              ],
-            );
-          },
-        ),
+                            );
+                          },
+                        ),
+                        // A seek bar.
+                        StreamBuilder<MediaState>(
+                          stream: _mediaStateStream,
+                          builder: (context, snapshot) {
+                            final mediaState = snapshot.data;
+                            return SeekBar(
+                              duration:
+                              mediaState?.mediaItem?.duration ?? Duration.zero,
+                              position: mediaState?.position ?? Duration.zero,
+                              onChangeEnd: (newPosition) {
+                                AudioService.seekTo(newPosition);
+                              },
+                            );
+                          },
+                        ),
+                        // Display the processing state.
+                        StreamBuilder<AudioProcessingState>(
+                          stream: AudioService.playbackStateStream
+                          // TODO grab speed from playback speed
+                              .map((state) => state.processingState)
+                              .distinct(),
+                          builder: (context, snapshot) {
+                            final processingState =
+                                snapshot.data ?? AudioProcessingState.none;
+                            return Text(
+                                "Processing state: ${describeEnum(processingState)}, speed ${snapshot}");
+                          },
+                        ),
+                        // Display the latest custom event.
+                        StreamBuilder(
+                          stream: AudioService.customEventStream,
+                          builder: (context, snapshot) {
+                            return Text("custom event: ${snapshot.data}");
+                          },
+                        ),
+                      ],
+                    ],
+                  );
+                },
+              ),
+            ),
+          )
+
+
+        ],
       ),
     );
   }
@@ -159,7 +198,7 @@ class MainScreen extends StatelessWidget {
       Rx.combineLatest2<MediaItem, Duration, MediaState>(
           AudioService.currentMediaItemStream,
           AudioService.positionStream,
-              (mediaItem, position) => MediaState(mediaItem, position));
+          (mediaItem, position) => MediaState(mediaItem, position));
 
   /// A stream reporting the combined state of the current queue and the current
   /// media item within that queue.
@@ -167,22 +206,22 @@ class MainScreen extends StatelessWidget {
       Rx.combineLatest2<List<MediaItem>, MediaItem, QueueState>(
           AudioService.queueStream,
           AudioService.currentMediaItemStream,
-              (queue, mediaItem) => QueueState(queue, mediaItem));
+          (queue, mediaItem) => QueueState(queue, mediaItem));
 
   RaisedButton audioPlayerButton() => startButton(
-    'AudioPlayer',
+        'AudioPlayer',
         () {
-      AudioService.start(
-        backgroundTaskEntrypoint: _audioPlayerTaskEntrypoint,
-        androidNotificationChannelName: 'Audio Service Demo',
-        // Enable this if you want the Android service to exit the foreground state on pause.
-        //androidStopForegroundOnPause: true,
-        androidNotificationColor: 0xFF2196f3,
-        androidNotificationIcon: 'mipmap/ic_launcher',
-        androidEnableQueue: true,
+          AudioService.start(
+            backgroundTaskEntrypoint: _audioPlayerTaskEntrypoint,
+            androidNotificationChannelName: 'Audio Service Demo',
+            // Enable this if you want the Android service to exit the foreground state on pause.
+            //androidStopForegroundOnPause: true,
+            androidNotificationColor: 0xFF2196f3,
+            androidNotificationIcon: 'mipmap/ic_launcher',
+            androidEnableQueue: true,
+          );
+        },
       );
-    },
-  );
 
   RaisedButton startButton(String label, VoidCallback onPressed) =>
       RaisedButton(
@@ -191,22 +230,22 @@ class MainScreen extends StatelessWidget {
       );
 
   IconButton playButton() => IconButton(
-    icon: Icon(Icons.play_arrow),
-    iconSize: 64.0,
-    onPressed: AudioService.play,
-  );
+        icon: Icon(Icons.play_arrow),
+        iconSize: 64.0,
+        onPressed: AudioService.play,
+      );
 
   IconButton pauseButton() => IconButton(
-    icon: Icon(Icons.pause),
-    iconSize: 64.0,
-    onPressed: AudioService.pause,
-  );
+        icon: Icon(Icons.pause),
+        iconSize: 64.0,
+        onPressed: AudioService.pause,
+      );
 
   IconButton stopButton() => IconButton(
-    icon: Icon(Icons.stop),
-    iconSize: 64.0,
-    onPressed: AudioService.stop,
-  );
+        icon: Icon(Icons.stop),
+        iconSize: 64.0,
+        onPressed: AudioService.stop,
+      );
 }
 
 class QueueState {
@@ -280,8 +319,8 @@ class _SeekBarState extends State<SeekBar> {
           bottom: 0.0,
           child: Text(
               RegExp(r'((^0*[1-9]\d*:)?\d{2}:\d{2})\.\d+$')
-                  .firstMatch("$_remaining")
-                  ?.group(1) ??
+                      .firstMatch("$_remaining")
+                      ?.group(1) ??
                   '$_remaining',
               style: Theme.of(context).textTheme.caption),
         ),
@@ -304,9 +343,11 @@ class AudioPlayerTask extends BackgroundAudioTask {
   Seeker _seeker;
   StreamSubscription<PlaybackEvent> _eventSubscription;
 
-  // TODO list of items should depends on
+  // TODO list of items should depends on selected item
   List<MediaItem> get queue => getFirstBookItems();
+
   int get index => _player.currentIndex;
+
   MediaItem get mediaItem => index == null ? null : queue[index];
 
   @override
