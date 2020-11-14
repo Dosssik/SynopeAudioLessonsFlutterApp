@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:synope_flutter_app/books/book_one_resources.dart';
 
 void main() => runApp(new MyApp());
 
@@ -298,13 +299,13 @@ void _audioPlayerTaskEntrypoint() async {
 
 /// This task defines logic for playing a list of podcast episodes.
 class AudioPlayerTask extends BackgroundAudioTask {
-  final _mediaLibrary = MediaLibrary();
   AudioPlayer _player = new AudioPlayer();
   AudioProcessingState _skipState;
   Seeker _seeker;
   StreamSubscription<PlaybackEvent> _eventSubscription;
 
-  List<MediaItem> get queue => _mediaLibrary.items;
+  // TODO list of items should depends on
+  List<MediaItem> get queue => getFirstBookItems();
   int get index => _player.currentIndex;
   MediaItem get mediaItem => index == null ? null : queue[index];
 
