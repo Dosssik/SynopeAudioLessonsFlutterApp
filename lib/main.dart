@@ -29,7 +29,7 @@ class MainScreen extends StatelessWidget {
     List<MediaItem> _items = getFirstBookItems();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Synope audio'),
+        title: const Text('Synope audio lessons'),
       ),
       body: Column(
         children: <Widget>[
@@ -43,25 +43,24 @@ class MainScreen extends StatelessWidget {
                   return ListTile(
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                      leading: Icon(Icons.audiotrack, color: Colors.red),
-                    title: Text(track.title),
+                    leading: Icon(Icons.audiotrack, color: Colors.red),
+                    title: Text(track.title + " "), // TODO readable duration
                     onTap: () {
                       print("item clicked ${track.id}");
                       if (AudioService.running) {
                         AudioService.playMediaItem(track);
                       } else {
                         AudioService.start(
-                          backgroundTaskEntrypoint: _audioPlayerTaskEntrypoint,
-                          androidNotificationChannelName: 'Audio Service Demo',
-                          // Enable this if you want the Android service to exit the foreground state on pause.
-                          androidStopForegroundOnPause: true,
-                          androidNotificationColor: 0xFF2196f3,
-                          androidNotificationIcon: 'mipmap/ic_launcher',
-                          androidEnableQueue: true,
-                          params: {
-                            "trackId": track.id
-                          }
-                        );
+                            backgroundTaskEntrypoint:
+                                _audioPlayerTaskEntrypoint,
+                            androidNotificationChannelName:
+                                'Synope audio lessons',
+                            // Enable this if you want the Android service to exit the foreground state on pause.
+                            androidStopForegroundOnPause: true,
+                            androidNotificationColor: 0xFF2196f3,
+                            androidNotificationIcon: 'mipmap/ic_launcher',
+                            androidEnableQueue: true,
+                            params: {"trackId": track.id});
                       }
                     },
                   );
@@ -72,11 +71,7 @@ class MainScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(10.0),
             ),
             elevation: 5,
-            margin: EdgeInsets.only(
-              right: 10,
-              left: 10,
-              bottom: 10
-            ),
+            margin: EdgeInsets.only(right: 10, left: 10, bottom: 10),
             child: Center(
               child: StreamBuilder<bool>(
                 stream: AudioService.runningStream,
@@ -94,6 +89,15 @@ class MainScreen extends StatelessWidget {
                       if (!running) ...[
                         // UI to show when we're not running, i.e. a menu.
                         // audioPlayerButton()
+                        Padding(
+                            padding: EdgeInsets.all(15),
+                            child: Text(
+                              "Select item to play",
+                              style: TextStyle(
+                                color: Colors.blueGrey,
+                                fontSize: 20,
+                              ),
+                            )),
                       ] else ...[
                         // UI to show when we're running, i.e. player state/controls.
 
@@ -109,42 +113,49 @@ class MainScreen extends StatelessWidget {
                               children: [
                                 if (queue != null && queue.isNotEmpty)
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
-                                      IconButton(
-                                        icon: Icon(Icons.skip_previous),
-                                        iconSize: 64.0,
-                                        color: Colors.red,
-                                        onPressed: mediaItem == queue.first
-                                            ? null
-                                            : AudioService.skipToPrevious,
+                                      Text(
+                                        "playback speed:",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold),
                                       ),
-                                      IconButton(
-                                          icon: Icon(Icons.skip_next),
-                                          iconSize: 64.0,
-                                          onPressed: () {
-                                            AudioService.setSpeed(0.2);
-                                          }
-                                      ),
+                                      Padding(
+                                          padding: EdgeInsets.only(
+                                              left: 10, right: 10),
+                                          child: SpeedSelectorWidget())
                                     ],
                                   ),
-                                if (mediaItem?.title != null) Text(mediaItem.title),
+                                if (mediaItem?.title != null)
+                                  Text(mediaItem.title),
                               ],
                             );
                           },
                         ),
                         // Play/pause/stop buttons.
-                        StreamBuilder<bool>(
-                          stream: AudioService.playbackStateStream
-                              .map((state) => state.playing)
-                              .distinct(),
+                        StreamBuilder<ControlButtonsState>(
+                          stream: _controlButtonsStateStream.distinct(),
                           builder: (context, snapshot) {
-                            final playing = snapshot.data ?? false;
+                            final playing =
+                                snapshot?.data?.playbackState?.playing ?? false;
                             return Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
+                                IconButton(
+                                  icon: Icon(Icons.fast_rewind_rounded),
+                                  iconSize: 64.0,
+                                  onPressed: () {
+                                    AudioService.rewind();
+                                  },
+                                ),
                                 if (playing) pauseButton() else playButton(),
-                                stopButton(),
+                                // stopButton(),
+                                IconButton(
+                                    icon: Icon(Icons.fast_forward_rounded),
+                                    iconSize: 64.0,
+                                    onPressed: () {
+                                      AudioService.fastForward();
+                                    }),
                               ],
                             );
                           },
@@ -155,8 +166,8 @@ class MainScreen extends StatelessWidget {
                           builder: (context, snapshot) {
                             final mediaState = snapshot.data;
                             return SeekBar(
-                              duration:
-                              mediaState?.mediaItem?.duration ?? Duration.zero,
+                              duration: mediaState?.mediaItem?.duration ??
+                                  Duration.zero,
                               position: mediaState?.position ?? Duration.zero,
                               onChangeEnd: (newPosition) {
                                 AudioService.seekTo(newPosition);
@@ -167,21 +178,13 @@ class MainScreen extends StatelessWidget {
                         // Display the processing state.
                         StreamBuilder<AudioProcessingState>(
                           stream: AudioService.playbackStateStream
-                          // TODO grab speed from playback speed
                               .map((state) => state.processingState)
                               .distinct(),
                           builder: (context, snapshot) {
                             final processingState =
                                 snapshot.data ?? AudioProcessingState.none;
                             return Text(
-                                "Processing state: ${describeEnum(processingState)}, speed ${snapshot}");
-                          },
-                        ),
-                        // Display the latest custom event.
-                        StreamBuilder(
-                          stream: AudioService.customEventStream,
-                          builder: (context, snapshot) {
-                            return Text("custom event: ${snapshot.data}");
+                                "Processing state: ${describeEnum(processingState)}");
                           },
                         ),
                       ],
@@ -191,8 +194,6 @@ class MainScreen extends StatelessWidget {
               ),
             ),
           )
-
-
         ],
       ),
     );
@@ -213,6 +214,12 @@ class MainScreen extends StatelessWidget {
           AudioService.queueStream,
           AudioService.currentMediaItemStream,
           (queue, mediaItem) => QueueState(queue, mediaItem));
+
+  Stream<ControlButtonsState> get _controlButtonsStateStream =>
+      Rx.combineLatest2<QueueState, PlaybackState, ControlButtonsState>(
+          _queueStateStream,
+          AudioService.playbackStateStream,
+          (queue, playback) => ControlButtonsState(queue, playback));
 
   RaisedButton audioPlayerButton() => startButton(
         'AudioPlayer',
@@ -254,11 +261,88 @@ class MainScreen extends StatelessWidget {
       );
 }
 
+class SpeedSelectorWidget extends StatefulWidget {
+  SpeedSelectorWidget({Key key}) : super(key: key);
+
+  @override
+  _SpeedSelectorWidgetState createState() => _SpeedSelectorWidgetState();
+}
+
+class _SpeedSelectorWidgetState extends State<SpeedSelectorWidget> {
+  String dropdownValue = '1x';
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButton<String>(
+      value: dropdownValue,
+      icon: Icon(Icons.arrow_downward),
+      iconSize: 24,
+      elevation: 16,
+      style: TextStyle(color: Colors.blue),
+      underline: Container(
+        height: 2,
+        color: Colors.blueAccent,
+      ),
+      onChanged: (String newValue) {
+        setState(() {
+          switch (newValue) {
+            case '1x':
+              {
+                AudioService.setSpeed(1);
+              }
+              break;
+            case '0.9x':
+              {
+                AudioService.setSpeed(0.9);
+              }
+              break;
+            case '0.8x':
+              {
+                AudioService.setSpeed(0.8);
+              }
+              break;
+            case '0.7x':
+              {
+                AudioService.setSpeed(0.7);
+              }
+              break;
+            case '0.6x':
+              {
+                AudioService.setSpeed(0.6);
+              }
+              break;
+            case '0.5x':
+              {
+                AudioService.setSpeed(0.5);
+              }
+              break;
+          }
+          dropdownValue = newValue;
+        });
+      },
+      items: <String>['1x', '0.9x', '0.8x', '0.7x', '0.6x', '0.5x']
+          .map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+    );
+  }
+}
+
 class QueueState {
   final List<MediaItem> queue;
   final MediaItem mediaItem;
 
   QueueState(this.queue, this.mediaItem);
+}
+
+class ControlButtonsState {
+  final QueueState queueState;
+  final PlaybackState playbackState;
+
+  ControlButtonsState(this.queueState, this.playbackState);
 }
 
 class MediaState {
@@ -330,6 +414,16 @@ class _SeekBarState extends State<SeekBar> {
                   '$_remaining',
               style: Theme.of(context).textTheme.caption),
         ),
+        Positioned(
+          left: 16.0,
+          bottom: 0.0,
+          child: Text(
+              RegExp(r'((^0*[1-9]\d*:)?\d{2}:\d{2})\.\d+$')
+                      .firstMatch("${widget.position}")
+                      ?.group(1) ??
+                  '${widget.position}',
+              style: Theme.of(context).textTheme.caption),
+        ),
       ],
     );
   }
@@ -371,12 +465,12 @@ class AudioPlayerTask extends BackgroundAudioTask {
     _player.processingStateStream.listen((state) {
       switch (state) {
         case ProcessingState.completed:
-        // In this example, the service stops when reaching the end.
+          // In this example, the service stops when reaching the end.
           onStop();
           break;
         case ProcessingState.ready:
-        // If we just came from skipping between tracks, clear the skip
-        // state now that we're ready to play.
+          // If we just came from skipping between tracks, clear the skip
+          // state now that we're ready to play.
           _skipState = null;
           break;
         default:
@@ -389,11 +483,12 @@ class AudioPlayerTask extends BackgroundAudioTask {
     try {
       await _player.load(ConcatenatingAudioSource(
         children:
-        queue.map((item) => AudioSource.uri(Uri.parse(item.id))).toList(),
+            queue.map((item) => AudioSource.uri(Uri.parse(item.id))).toList(),
       ));
       // In this example, we automatically start playing on start.
       String firstItemId = params["trackId"];
-      MediaItem trackToPlay = queue.firstWhere((element) => element.id == firstItemId);
+      MediaItem trackToPlay =
+          queue.firstWhere((element) => element.id == firstItemId);
       onPlayFromMediaId(trackToPlay.id);
     } catch (e) {
       print("Error: $e");
@@ -430,13 +525,13 @@ class AudioPlayerTask extends BackgroundAudioTask {
   Future<void> onSeekTo(Duration position) => _player.seek(position);
 
   @override
-  Future<void> onFastForward() => _seekRelative(fastForwardInterval);
+  Future<void> onFastForward() => _seekRelative(Duration(seconds: 5));
 
   @override
   Future<void> onSetSpeed(double speed) => _player.setSpeed(speed);
 
   @override
-  Future<void> onRewind() => _seekRelative(-rewindInterval);
+  Future<void> onRewind() => _seekRelative(-Duration(seconds: 5));
 
   @override
   Future<void> onSeekForward(bool begin) async => _seekContinuously(begin, 1);
@@ -453,7 +548,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onPlayFromMediaId(String mediaId) {
-    MediaItem trackToPlay = queue.firstWhere((element) => element.id == mediaId);
+    MediaItem trackToPlay =
+        queue.firstWhere((element) => element.id == mediaId);
     int newIndex = queue.indexOf(trackToPlay);
     _player.seek(Duration.zero, index: newIndex);
     _player.play();
@@ -549,7 +645,7 @@ class MediaLibrary {
       artist: "Science Friday and WNYC Studios",
       duration: Duration(milliseconds: 5739820),
       artUri:
-      "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+          "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
     ),
     MediaItem(
       id: "https://s3.amazonaws.com/scifri-segments/scifri201711241.mp3",
@@ -558,7 +654,7 @@ class MediaLibrary {
       artist: "Science Friday and WNYC Studios",
       duration: Duration(milliseconds: 2856950),
       artUri:
-      "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+          "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
     ),
   ];
 
@@ -603,11 +699,11 @@ class Seeker {
   bool _running = false;
 
   Seeker(
-      this.player,
-      this.positionInterval,
-      this.stepInterval,
-      this.mediaItem,
-      );
+    this.player,
+    this.positionInterval,
+    this.stepInterval,
+    this.mediaItem,
+  );
 
   start() async {
     _running = true;
