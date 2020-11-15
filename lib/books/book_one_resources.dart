@@ -135,8 +135,8 @@ List<MediaItem> getFirstBookItems() {
         duration: Duration(seconds: 69)),
     MediaItem(
         id: "https://www.synope.dk/mp3/pv/27.mp3",
-        album: "Lydfil 27 - Morgenrytme vej til dansk",
-        title: "TODO",
+        album: "På vej til dansk",
+        title: "Lydfil 27 - Morgenrytme",
         duration: Duration(seconds: 114)),
     MediaItem(
         id: "https://www.synope.dk/mp3/pv/28.mp3",
