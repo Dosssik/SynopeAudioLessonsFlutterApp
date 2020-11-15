@@ -6,6 +6,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:synope_flutter_app/books/book_one_resources.dart';
@@ -142,7 +143,11 @@ class MainScreen extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 IconButton(
-                                  icon: Icon(Icons.fast_rewind_rounded),
+                                  icon: SvgPicture.asset(
+                                    'assets/rewind-5.svg',
+                                    width: 32.0,
+                                    height: 32.0,
+                                  ),
                                   iconSize: 64.0,
                                   onPressed: () {
                                     AudioService.rewind();
@@ -151,7 +156,11 @@ class MainScreen extends StatelessWidget {
                                 if (playing) pauseButton() else playButton(),
                                 // stopButton(),
                                 IconButton(
-                                    icon: Icon(Icons.fast_forward_rounded),
+                                    icon: SvgPicture.asset(
+                                      'assets/fast-forward-5.svg',
+                                      width: 32.0,
+                                      height: 32.0,
+                                    ),
                                     iconSize: 64.0,
                                     onPressed: () {
                                       AudioService.fastForward();
@@ -221,36 +230,15 @@ class MainScreen extends StatelessWidget {
           AudioService.playbackStateStream,
           (queue, playback) => ControlButtonsState(queue, playback));
 
-  RaisedButton audioPlayerButton() => startButton(
-        'AudioPlayer',
-        () {
-          AudioService.start(
-            backgroundTaskEntrypoint: _audioPlayerTaskEntrypoint,
-            androidNotificationChannelName: 'Audio Service Demo',
-            // Enable this if you want the Android service to exit the foreground state on pause.
-            //androidStopForegroundOnPause: true,
-            androidNotificationColor: 0xFF2196f3,
-            androidNotificationIcon: 'mipmap/ic_launcher',
-            androidEnableQueue: true,
-          );
-        },
-      );
-
-  RaisedButton startButton(String label, VoidCallback onPressed) =>
-      RaisedButton(
-        child: Text(label),
-        onPressed: onPressed,
-      );
-
   IconButton playButton() => IconButton(
         icon: Icon(Icons.play_arrow),
-        iconSize: 64.0,
+        iconSize: 48.0,
         onPressed: AudioService.play,
       );
 
   IconButton pauseButton() => IconButton(
         icon: Icon(Icons.pause),
-        iconSize: 64.0,
+        iconSize: 48.0,
         onPressed: AudioService.pause,
       );
 
