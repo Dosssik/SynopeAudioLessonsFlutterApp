@@ -199,12 +199,21 @@ class MainScreen extends StatelessWidget {
                           builder: (context, snapshot) {
                             final processingState =
                                 snapshot.data ?? AudioProcessingState.none;
+                            Color texColor;
+                            if (kReleaseMode) {
+                              texColor = Colors.white;
+                            } else {
+                              texColor = Colors.grey;
+                            }
+
                             return Padding(
                                 padding: EdgeInsets.only(bottom: 10),
                                 child: Text(
                                   "Processing state: ${describeEnum(processingState)}",
                                   style: TextStyle(
-                                      fontSize: 12, color: Colors.grey),
+                                      fontSize: 12,
+                                      color: texColor
+                                  ),
                                 ));
                           },
                         ),
