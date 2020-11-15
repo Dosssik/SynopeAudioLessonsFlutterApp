@@ -114,17 +114,25 @@ class MainScreen extends StatelessWidget {
                               children: [
                                 if (queue != null && queue.isNotEmpty)
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        "playback speed:",
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      Padding(
-                                          padding: EdgeInsets.only(
-                                              left: 10, right: 10),
-                                          child: SpeedSelectorWidget())
+                                      IconButton(icon: Icon(Icons.close), onPressed: AudioService.stop),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "Speed:",
+                                            style: TextStyle(
+                                                color: Colors.grey,
+                                                fontWeight: FontWeight.bold
+                                            ),
+                                          ),
+                                          Padding(
+                                              padding: EdgeInsets.only(
+                                                  left: 10, right: 10),
+                                              child: SpeedSelectorWidget()
+                                          )
+                                        ],
+                                      )
                                     ],
                                   ),
                                 if (mediaItem?.title != null)
@@ -154,7 +162,6 @@ class MainScreen extends StatelessWidget {
                                   },
                                 ),
                                 if (playing) pauseButton() else playButton(),
-                                // stopButton(),
                                 IconButton(
                                     icon: SvgPicture.asset(
                                       'assets/fast-forward-5.svg',
@@ -192,8 +199,13 @@ class MainScreen extends StatelessWidget {
                           builder: (context, snapshot) {
                             final processingState =
                                 snapshot.data ?? AudioProcessingState.none;
-                            return Text(
-                                "Processing state: ${describeEnum(processingState)}");
+                            return Padding(
+                                padding: EdgeInsets.only(bottom: 10),
+                                child: Text(
+                                  "Processing state: ${describeEnum(processingState)}",
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.grey),
+                                ));
                           },
                         ),
                       ],
@@ -242,11 +254,6 @@ class MainScreen extends StatelessWidget {
         onPressed: AudioService.pause,
       );
 
-  IconButton stopButton() => IconButton(
-        icon: Icon(Icons.stop),
-        iconSize: 64.0,
-        onPressed: AudioService.stop,
-      );
 }
 
 class SpeedSelectorWidget extends StatefulWidget {
