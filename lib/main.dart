@@ -149,13 +149,22 @@ class BookAudioTrackState extends State<BookAudioTracksScreen>
                     Divider(),
                 itemBuilder: (BuildContext context, int index) {
                   var track = _items[index];
+                  String title = track.title;
+                  int idx = track.title.indexOf("-");
+                  final lessonTitle = title.substring(0,idx).trim();
+                  final lessonName = title.substring(idx+1).trim();
+                  final duration =
+                      RegExp(r'((^0*[1-9]\d*:)?\d{2}:\d{2})\.\d+$')
+                          .firstMatch("${track.duration}")
+                          ?.group(1) ??
+                          '${track.duration}';
                   return ListTile(
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                     leading: Icon(Icons.audiotrack, color: Colors.red),
-                    title: Text(track.title + " "), // TODO readable duration
+                    title: Text(lessonTitle + " (" + duration + ")"),
+                    subtitle: Text(lessonName),
                     onTap: () {
-                      print("item clicked ${track.id}");
                       if (AudioService.running) {
                         AudioService.playMediaItem(track);
                       } else {
