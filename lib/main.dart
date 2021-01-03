@@ -153,11 +153,7 @@ class BookAudioTrackState extends State<BookAudioTracksScreen>
                   int idx = track.title.indexOf("-");
                   final lessonTitle = title.substring(0,idx).trim();
                   final lessonName = title.substring(idx+1).trim();
-                  final duration =
-                      RegExp(r'((^0*[1-9]\d*:)?\d{2}:\d{2})\.\d+$')
-                          .firstMatch("${track.duration}")
-                          ?.group(1) ??
-                          '${track.duration}';
+                  final duration = getDuration(track);
                   return ListTile(
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
@@ -174,7 +170,7 @@ class BookAudioTrackState extends State<BookAudioTracksScreen>
                             androidNotificationChannelName:
                                 'Synope audio lessons',
                             // Enable this if you want the Android service to exit the foreground state on pause.
-                            androidStopForegroundOnPause: true,
+                            // androidStopForegroundOnPause: true,
                             androidNotificationColor: 0xFF2196f3,
                             androidNotificationIcon: 'mipmap/ic_launcher',
                             androidEnableQueue: true,
@@ -351,6 +347,13 @@ class BookAudioTrackState extends State<BookAudioTracksScreen>
         ],
       ),
     );
+  }
+
+  String getDuration(MediaItem track) {
+    return RegExp(r'((^0*[1-9]\d*:)?\d{2}:\d{2})\.\d+$')
+                        .firstMatch("${track.duration}")
+                        ?.group(1) ??
+                        '${track.duration}';
   }
 }
 
