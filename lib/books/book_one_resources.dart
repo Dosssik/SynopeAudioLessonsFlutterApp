@@ -179,10 +179,10 @@ List<MediaItem> getFirstBookItems() {
         title: "Lydfil 35 - Fremtid - dialog 1-3",
         duration: Duration(seconds: 92)),
     MediaItem(
-        id: "https://www.synope.dk/mp3/pv/36.mp3",
+        id: "https://www.synope.dk/mp3/pvny5/36.mp3",
         album: "På vej til dansk",
         title: "Lydfil 36 - Alex og Olga skal have gæster",
-        duration: Duration(seconds: 187)),
+        duration: Duration(seconds: 180)),
     MediaItem(
         id: "https://www.synope.dk/mp3/pv/37.mp3",
         album: "På vej til dansk",
@@ -204,10 +204,10 @@ List<MediaItem> getFirstBookItems() {
         title: "Lydfil 40 - Datidsdialoger 3 og 4",
         duration: Duration(seconds: 60)),
     MediaItem(
-        id: "https://www.synope.dk/mp3/pv/41.mp3",
+        id: "https://www.synope.dk/mp3/pvny5/41.mp3",
         album: "På vej til dansk",
         title: "Lydfil 41 - Tenzin tager bussen",
-        duration: Duration(seconds: 204)),
+        duration: Duration(seconds: 198)),
     MediaItem(
         id: "https://www.synope.dk/mp3/pv/42.mp3",
         album: "På vej til dansk",
@@ -254,10 +254,10 @@ List<MediaItem> getFirstBookItems() {
         title: "Lydfil 50 - Dialog - penge og priser",
         duration: Duration(seconds: 29)),
     MediaItem(
-        id: "https://www.synope.dk/mp3/pv/51.mp3",
+        id: "https://www.synope.dk/mp3/pvny5/51.mp3",
         album: "På vej til dansk",
         title: "Lydfil 51 - Indkøbsdialoger 1-3",
-        duration: Duration(seconds: 174)),
+        duration: Duration(seconds: 158)),
     MediaItem(
         id: "https://www.synope.dk/mp3/pv/52.mp3",
         album: "På vej til dansk",
@@ -269,7 +269,7 @@ List<MediaItem> getFirstBookItems() {
         title: "Lydfil 53 - Reduktion",
         duration: Duration(seconds: 75)),
     MediaItem(
-        id: "https://www.synope.dk/mp3/pv/54.mp3",
+        id: "https://www.synope.dk/mp3/pvny5/54.mp3",
         album: "På vej til dansk",
         title: "Lydfil 54 - Charlotte lever sundt",
         duration: Duration(seconds: 252)),
@@ -289,35 +289,35 @@ List<MediaItem> getFirstBookItems() {
         title: "Lydfil 57 - Boligen",
         duration: Duration(seconds: 110)),
     MediaItem(
-        id: "https://www.synope.dk/mp3/pv/58.mp3",
+        id: "https://www.synope.dk/mp3/pvny5/58.mp3",
         album: "På vej til dansk",
         title: "Lydfil 58 - Lytteøvelse",
-        duration: Duration(seconds: 99)),
+        duration: Duration(seconds: 226)),
     MediaItem(
-        id: "https://www.synope.dk/mp3/pv/59.mp3",
+        id: "https://www.synope.dk/mp3/pvny/59.mp3",
         album: "På vej til dansk",
         title: "Lydfil 59 - Lytteøvelse - køkkenet",
-        duration: Duration(seconds: 129)),
+        duration: Duration(seconds: 187)),
     MediaItem(
-        id: "https://www.synope.dk/mp3/pv/60.mp3",
+        id: "https://www.synope.dk/mp3/pvny/60.mp3",
         album: "På vej til dansk",
         title: "Lydfil 60 - Lytteøvelse - endelser",
-        duration: Duration(seconds: 86)),
+        duration: Duration(seconds: 131)),
     MediaItem(
-        id: "https://www.synope.dk/mp3/pv/61.mp3",
+        id: "https://www.synope.dk/mp3/pvny/61.mp3",
         album: "På vej til dansk",
         title: "Lydfil 61 - Per og Randi",
-        duration: Duration(seconds: 110)),
-    MediaItem(
-        id: "https://www.synope.dk/mp3/pv/62.mp3",
-        album: "På vej til dansk",
-        title: "Lydfil 62 - Farver",
         duration: Duration(seconds: 275)),
     MediaItem(
-        id: "https://www.synope.dk/mp3/pv/63.mp3",
+        id: "https://www.synope.dk/mp3/pvny/62.mp3",
+        album: "På vej til dansk",
+        title: "Lydfil 62 - Farver",
+        duration: Duration(seconds: 71)),
+    MediaItem(
+        id: "https://www.synope.dk/mp3/pvny/63.mp3",
         album: "På vej til dansk",
         title: "Lydfil 63 - Soveværelset",
-        duration: Duration(seconds: 71)),
+        duration: Duration(seconds: 110)),
     MediaItem(
         id: "https://www.synope.dk/mp3/pv/64.mp3",
         album: "På vej til dansk",
@@ -359,7 +359,7 @@ List<MediaItem> getFirstBookItems() {
         title: "Lydfil 71 - Reza",
         duration: Duration(seconds: 233)),
     MediaItem(
-        id: "https://www.synope.dk/mp3/pv/72.mp3",
+        id: "https://www.synope.dk/mp3/pvny5/72.mp3",
         album: "På vej til dansk",
         title: "Lydfil 72 - Manu og Thao",
         duration: Duration(seconds: 187)),
@@ -384,12 +384,12 @@ List<MediaItem> getFirstBookItems() {
         title: "Lydfil 76 - Vejr og temperatur",
         duration: Duration(seconds: 249)),
     MediaItem(
-        id: "https://www.synope.dk/mp3/pv/77.mp3",
+        id: "https://www.synope.dk/mp3/pvny5/77.mp3",
         album: "På vej til dansk",
         title: "Lydfil 77 - Danmark",
-        duration: Duration(seconds: 296)),
+        duration: Duration(seconds: 249)),
     MediaItem(
-        id: "https://www.synope.dk/mp3/pv/77-2.mp3",
+        id: "https://www.synope.dk/mp3/pvny5/77-2.mp3",
         album: "På vej til dansk",
         title: "Lydfil 77 (2) - Danmark (5. udg, 8+. oplag)",
         duration: Duration(seconds: 296)),
