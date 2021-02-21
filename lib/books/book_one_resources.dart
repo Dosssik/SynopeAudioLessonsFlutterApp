@@ -1,6 +1,5 @@
 import 'package:audio_service/audio_service.dart';
 
-// MOCK DATA
 List<MediaItem> getFirstBookItems() {
   return <MediaItem>[
     MediaItem(

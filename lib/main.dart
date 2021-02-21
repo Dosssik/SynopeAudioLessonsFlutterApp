@@ -10,6 +10,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:synope_flutter_app/books/book_one_resources.dart';
+import 'package:synope_flutter_app/books/book_two_resources.dart';
 
 void main() => runApp(new MyApp());
 
@@ -27,6 +28,8 @@ class MyApp extends StatelessWidget {
 class BookSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // List<MediaItem> _items = getFirstBookItems()
+
     return Scaffold(
         appBar: AppBar(
           title: const Text('Synope audio lessons'),
@@ -46,8 +49,9 @@ class BookSelectionScreen extends StatelessWidget {
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
               ),
-              itemCount: 1, // TODO add more books
+              itemCount: 2,
               itemBuilder: (BuildContext context, int index) {
+                Book book = getBookByIndex(index);
                 return Container(
                   child: Stack(
                     alignment: Alignment.bottomCenter,
@@ -56,14 +60,17 @@ class BookSelectionScreen extends StatelessWidget {
                         child: Padding(
                             padding: EdgeInsets.only(bottom: 30),
                             child: Image(
-                              image: AssetImage("assets/book_pv_cover.jpg"),
+                              image: AssetImage(book.imagePath),
                               fit: BoxFit.cover,
                             )),
                         onPressed: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => BookAudioTracksScreen()),
+                                builder: (context) {
+                                  // return BookAudioTracksScreen();
+                                  return BookAudioTracksScreen(book);
+                                }),
                           );
                         },
                       ),
@@ -73,7 +80,7 @@ class BookSelectionScreen extends StatelessWidget {
                         width: double.infinity,
                         child: Center(
                           child: Text(
-                            "På vej til dansk",
+                            book.label,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -91,14 +98,44 @@ class BookSelectionScreen extends StatelessWidget {
           ),
         ]));
   }
+
+  Book getBookByIndex(int index) {
+    Book book;
+    switch (index) {
+      case 0:
+        book = Book(1, getFirstBookItems(), "På vej til dansk", "assets/book_pv_cover.jpg");
+        break;
+      case 1:
+        book = Book(2, getSecondBookItems(), "Videre mod dansk", "assets/book_vmd_cover.jpg");
+        break;
+    }
+    return book;
+  }
+}
+
+class Book {
+  final int number;
+  final List<MediaItem> items;
+  final String label;
+  final String imagePath;
+
+  Book(this.number, this.items, this.label, this.imagePath);
 }
 
 class BookAudioTracksScreen extends StatefulWidget {
-  BookAudioTrackState createState() => BookAudioTrackState();
+  final Book book;
+
+  BookAudioTracksScreen(this.book);
+
+  BookAudioTrackState createState() => BookAudioTrackState(book);
 }
 
 class BookAudioTrackState extends State<BookAudioTracksScreen>
     with TickerProviderStateMixin {
+  final Book book;
+
+  BookAudioTrackState(this.book);
+
   /// A stream reporting the combined state of the current media item and its
   /// current position.
   Stream<MediaState> get _mediaStateStream =>
@@ -135,225 +172,260 @@ class BookAudioTrackState extends State<BookAudioTracksScreen>
 
   @override
   Widget build(BuildContext context) {
-    List<MediaItem> _items = getFirstBookItems();
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Synope audio lessons'),
-      ),
-      body: Column(
-        children: <Widget>[
-          Expanded(
-            child: ListView.separated(
-                itemCount: _items.length,
-                separatorBuilder: (BuildContext context, int index) =>
-                    Divider(),
-                itemBuilder: (BuildContext context, int index) {
-                  var track = _items[index];
-                  String title = track.title;
-                  int idx = track.title.indexOf("-");
-                  final lessonTitle = title.substring(0,idx).trim();
-                  final lessonName = title.substring(idx+1).trim();
-                  final duration = getDuration(track);
-                  return ListTile(
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                    leading: Icon(Icons.audiotrack, color: Colors.red),
-                    title: Text(lessonTitle + " (" + duration + ")"),
-                    subtitle: Text(lessonName),
-                    onTap: () {
-                      if (AudioService.running) {
-                        AudioService.playMediaItem(track);
-                      } else {
-                        AudioService.start(
-                            backgroundTaskEntrypoint:
-                                _audioPlayerTaskEntrypoint,
-                            androidNotificationChannelName:
-                                'Synope audio lessons',
-                            // Enable this if you want the Android service to exit the foreground state on pause.
-                            // androidStopForegroundOnPause: true,
-                            androidNotificationColor: 0xFF2196f3,
-                            androidNotificationIcon: 'mipmap/ic_launcher',
-                            androidEnableQueue: true,
-                            params: {"trackId": track.id});
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Synope audio lessons'),
+        ),
+        body: Column(
+          children: <Widget>[
+            Expanded(
+              child: ListView.separated(
+                  itemCount: book.items.length,
+                  separatorBuilder: (BuildContext context, int index) =>
+                      Divider(),
+                  itemBuilder: (BuildContext context, int index) {
+                    var track = book.items[index];
+                    String title = track.title;
+                    int idx = track.title.indexOf("-");
+                    final lessonTitle = title.substring(0, idx).trim();
+                    final lessonName = title.substring(idx + 1).trim();
+                    final duration = getDuration(track);
+                    return ListTile(
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                      leading: Icon(Icons.audiotrack, color: Colors.red),
+                      title: Text(lessonTitle + " (" + duration + ")"),
+                      subtitle: Text(lessonName),
+                      onTap: () {
+                        if (AudioService.running) {
+                          AudioService.playMediaItem(track);
+                        } else {
+                          AudioService.start(
+                              backgroundTaskEntrypoint:
+                                  _audioPlayerTaskEntrypoint,
+                              androidNotificationChannelName:
+                                  'Synope audio lessons',
+                              // Enable this if you want the Android service to exit the foreground state on pause.
+                              // androidStopForegroundOnPause: true,
+                              androidNotificationColor: 0xFF2196f3,
+                              androidNotificationIcon: 'mipmap/ic_launcher',
+                              androidEnableQueue: true,
+                              params: {
+                                "trackId": track.id,
+                                "bookNumber": book.number
+                              });
+                        }
+                      },
+                    );
+                  }),
+            ),
+            AnimatedSize(
+              vsync: this,
+              duration: new Duration(milliseconds: 150),
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                elevation: 5,
+                margin: EdgeInsets.only(right: 10, left: 10, bottom: 10),
+                child: Center(
+                  child: StreamBuilder<bool>(
+                    stream: AudioService.runningStream,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState != ConnectionState.active) {
+                        // Don't show anything until we've ascertained whether or not the
+                        // service is running, since we want to show a different UI in
+                        // each case.
+                        return SizedBox();
                       }
-                    },
-                  );
-                }),
-          ),
-          AnimatedSize(
-            vsync: this,
-            duration: new Duration(milliseconds: 150),
-            child: Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              elevation: 5,
-              margin: EdgeInsets.only(right: 10, left: 10, bottom: 10),
-              child: Center(
-                child: StreamBuilder<bool>(
-                  stream: AudioService.runningStream,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState != ConnectionState.active) {
-                      // Don't show anything until we've ascertained whether or not the
-                      // service is running, since we want to show a different UI in
-                      // each case.
-                      return SizedBox();
-                    }
-                    final running = snapshot.data ?? false;
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (!running) ...[
-                          // UI to show when we're not running, i.e. a menu.
-                          // audioPlayerButton()
-                          Padding(
-                              padding: EdgeInsets.all(15),
-                              child: Text(
-                                "Select item to play",
-                                style: TextStyle(
-                                  color: Colors.blueGrey,
-                                  fontSize: 20,
-                                ),
-                              )),
-                        ] else ...[
-                          // UI to show when we're running, i.e. player state/controls.
+                      final running = snapshot.data ?? false;
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (!running) ...[
+                            // UI to show when we're not running, i.e. a menu.
+                            // audioPlayerButton()
+                            Padding(
+                                padding: EdgeInsets.all(15),
+                                child: Text(
+                                  "Select item to play",
+                                  style: TextStyle(
+                                    color: Colors.blueGrey,
+                                    fontSize: 20,
+                                  ),
+                                )),
+                          ] else ...[
+                            // UI to show when we're running, i.e. player state/controls.
 
-                          // Queue display/controls.
-                          StreamBuilder<QueueState>(
-                            stream: _queueStateStream,
-                            builder: (context, snapshot) {
-                              final queueState = snapshot.data;
-                              final mediaItem = queueState?.mediaItem;
-                              String title;
-                              if (mediaItem?.title != null) {
-                                title = mediaItem.title;
-                              } else {
-                                title = "...";
-                              }
-                              return Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      IconButton(
-                                          icon: Icon(Icons.close),
-                                          onPressed: AudioService.stop),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Speed:",
-                                            style: TextStyle(
-                                                color: Colors.grey,
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Padding(
-                                              padding: EdgeInsets.only(
-                                                  left: 10, right: 10),
-                                              child: SpeedSelectorWidget())
-                                        ],
-                                      )
-                                    ],
-                                  ),
-                                  Text(title),
-                                ],
-                              );
-                            },
-                          ),
-                          // Play/pause/stop buttons.
-                          StreamBuilder<ControlButtonsState>(
-                            stream: _controlButtonsStateStream.distinct(),
-                            builder: (context, snapshot) {
-                              final playing =
-                                  snapshot?.data?.playbackState?.playing ??
-                                      false;
-                              return Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  IconButton(
-                                    icon: SvgPicture.asset(
-                                      'assets/rewind-5.svg',
-                                      width: 32.0,
-                                      height: 32.0,
+                            // Queue display/controls.
+                            StreamBuilder<QueueState>(
+                              stream: _queueStateStream,
+                              builder: (context, snapshot) {
+                                final queueState = snapshot.data;
+                                final mediaItem = queueState?.mediaItem;
+                                String title;
+                                if (mediaItem?.title != null) {
+                                  title = mediaItem.title;
+                                } else {
+                                  title = "...";
+                                }
+                                return Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        IconButton(
+                                            icon: Icon(Icons.close),
+                                            onPressed: AudioService.stop),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              "Speed:",
+                                              style: TextStyle(
+                                                  color: Colors.grey,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            Padding(
+                                                padding: EdgeInsets.only(
+                                                    left: 10, right: 10),
+                                                child: SpeedSelectorWidget())
+                                          ],
+                                        )
+                                      ],
                                     ),
-                                    iconSize: 64.0,
-                                    onPressed: () {
-                                      AudioService.rewind();
-                                    },
-                                  ),
-                                  if (playing) pauseButton() else playButton(),
-                                  IconButton(
+                                    Text(title),
+                                  ],
+                                );
+                              },
+                            ),
+                            // Play/pause/stop buttons.
+                            StreamBuilder<ControlButtonsState>(
+                              stream: _controlButtonsStateStream.distinct(),
+                              builder: (context, snapshot) {
+                                final playing =
+                                    snapshot?.data?.playbackState?.playing ??
+                                        false;
+                                return Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton(
                                       icon: SvgPicture.asset(
-                                        'assets/fast-forward-5.svg',
+                                        'assets/rewind-5.svg',
                                         width: 32.0,
                                         height: 32.0,
                                       ),
                                       iconSize: 64.0,
                                       onPressed: () {
-                                        AudioService.fastForward();
-                                      }),
-                                ],
-                              );
-                            },
-                          ),
-                          // A seek bar.
-                          StreamBuilder<MediaState>(
-                            stream: _mediaStateStream,
-                            builder: (context, snapshot) {
-                              final mediaState = snapshot.data;
-                              return SeekBar(
-                                duration: mediaState?.mediaItem?.duration ??
-                                    Duration.zero,
-                                position: mediaState?.position ?? Duration.zero,
-                                onChangeEnd: (newPosition) {
-                                  AudioService.seekTo(newPosition);
-                                },
-                              );
-                            },
-                          ),
-                          // Display the processing state.
-                          StreamBuilder<AudioProcessingState>(
-                            stream: AudioService.playbackStateStream
-                                .map((state) => state.processingState)
-                                .distinct(),
-                            builder: (context, snapshot) {
-                              final processingState =
-                                  snapshot.data ?? AudioProcessingState.none;
-                              Color texColor;
-                              if (kReleaseMode) {
-                                texColor = Colors.white;
-                              } else {
-                                texColor = Colors.grey;
-                              }
+                                        AudioService.rewind();
+                                      },
+                                    ),
+                                    if (playing) pauseButton() else playButton(),
+                                    IconButton(
+                                        icon: SvgPicture.asset(
+                                          'assets/fast-forward-5.svg',
+                                          width: 32.0,
+                                          height: 32.0,
+                                        ),
+                                        iconSize: 64.0,
+                                        onPressed: () {
+                                          AudioService.fastForward();
+                                        }),
+                                  ],
+                                );
+                              },
+                            ),
+                            // A seek bar.
+                            StreamBuilder<MediaState>(
+                              stream: _mediaStateStream,
+                              builder: (context, snapshot) {
+                                final mediaState = snapshot.data;
+                                return SeekBar(
+                                  duration: mediaState?.mediaItem?.duration ??
+                                      Duration.zero,
+                                  position: mediaState?.position ?? Duration.zero,
+                                  onChangeEnd: (newPosition) {
+                                    AudioService.seekTo(newPosition);
+                                  },
+                                );
+                              },
+                            ),
+                            // Display the processing state.
+                            StreamBuilder<AudioProcessingState>(
+                              stream: AudioService.playbackStateStream
+                                  .map((state) => state.processingState)
+                                  .distinct(),
+                              builder: (context, snapshot) {
+                                final processingState =
+                                    snapshot.data ?? AudioProcessingState.none;
+                                Color texColor;
+                                if (kReleaseMode) {
+                                  texColor = Colors.white;
+                                } else {
+                                  texColor = Colors.grey;
+                                }
 
-                              return Padding(
-                                  padding: EdgeInsets.only(bottom: 10),
-                                  child: Text(
-                                    "Processing state: ${describeEnum(processingState)}",
-                                    style: TextStyle(
-                                        fontSize: 12, color: texColor),
-                                  ));
-                            },
-                          ),
+                                return Padding(
+                                    padding: EdgeInsets.only(bottom: 10),
+                                    child: Text(
+                                      "Processing state: ${describeEnum(processingState)}",
+                                      style: TextStyle(
+                                          fontSize: 12, color: texColor),
+                                    ));
+                              },
+                            ),
+                          ],
                         ],
-                      ],
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-          )
-        ],
+            )
+          ],
+        ),
       ),
     );
   }
 
+  Future<bool> _onWillPop() async {
+    if (AudioService.running) {
+      return (await showDialog(
+        context: context,
+        builder: (context) => new AlertDialog(
+          title: new Text('Are you sure?'),
+          content: new Text('Navigation back to books list will stop the playback.'),
+          actions: <Widget>[
+            new FlatButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: new Text('No'),
+            ),
+            new FlatButton(
+              onPressed: () {
+                AudioService.stop();
+                Navigator.of(context).pop(true);
+              },
+              child: new Text('Yes'),
+            ),
+          ],
+        ),
+      )) ?? false;
+    } else {
+      Navigator.of(context).pop(true);
+      return false;
+    }
+
+
+  }
+
   String getDuration(MediaItem track) {
     return RegExp(r'((^0*[1-9]\d*:)?\d{2}:\d{2})\.\d+$')
-                        .firstMatch("${track.duration}")
-                        ?.group(1) ??
-                        '${track.duration}';
+            .firstMatch("${track.duration}")
+            ?.group(1) ??
+        '${track.duration}';
   }
 }
 
@@ -538,8 +610,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
   Seeker _seeker;
   StreamSubscription<PlaybackEvent> _eventSubscription;
 
-  // TODO list of items should depends on selected item
-  List<MediaItem> get queue => getFirstBookItems();
+  List<MediaItem> items;
+  List<MediaItem> get queue => items;
 
   int get index => _player.currentIndex;
 
@@ -574,14 +646,22 @@ class AudioPlayerTask extends BackgroundAudioTask {
       }
     });
 
-    // Load and broadcast the queue
-    AudioServiceBackground.setQueue(queue);
     try {
+      switch (params["bookNumber"]) {
+        case 1:
+          items = getFirstBookItems();
+          break;
+        case 2:
+          items = getSecondBookItems();
+          break;
+      }
+
+      // Load and broadcast the queue
+      AudioServiceBackground.setQueue(queue);
       await _player.load(ConcatenatingAudioSource(
         children:
             queue.map((item) => AudioSource.uri(Uri.parse(item.id))).toList(),
       ));
-      // In this example, we automatically start playing on start.
       String firstItemId = params["trackId"];
       MediaItem trackToPlay =
           queue.firstWhere((element) => element.id == firstItemId);
