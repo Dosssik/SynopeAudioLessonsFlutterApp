@@ -1,5 +1,5 @@
 name: synope_flutter_app
-description: Demonstrates how to use the audio_service plugin.
+description: Simple app for audio lessons.
 publish_to: 'none'
 version: 1.0.2+2
 
@@ -17,7 +17,7 @@ dependencies:
   flutter_isolate: ^1.0.0+14
   flutter_cache_manager: ^1.4.0
   js: ^0.6.2
-  audio_service: ^0.15.3
+  audio_service: ^0.16.2
   flutter_svg: ^0.19.1
 
   # The following adds the Cupertino Icons font to your application.

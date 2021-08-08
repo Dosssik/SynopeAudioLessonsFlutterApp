@@ -11,6 +11,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:synope_flutter_app/books/book_one_resources.dart';
 import 'package:synope_flutter_app/books/book_two_resources.dart';
+import 'package:synope_flutter_app/books/book_three_resources.dart';
 
 void main() => runApp(new MyApp());
 
@@ -32,13 +33,13 @@ class BookSelectionScreen extends StatelessWidget {
 
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Synope audio lessons'),
+          title: const Text('Let\'s learn danish'),
         ),
         body: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
           Padding(
               padding: EdgeInsets.all(15),
               child: Text(
-                "More books coming soon!",
+                "Choose a book:",
                 style: TextStyle(
                   color: Colors.blueGrey,
                   fontSize: 20,
@@ -49,7 +50,7 @@ class BookSelectionScreen extends StatelessWidget {
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
               ),
-              itemCount: 2,
+              itemCount: 3,
               itemBuilder: (BuildContext context, int index) {
                 Book book = getBookByIndex(index);
                 return Container(
@@ -107,6 +108,9 @@ class BookSelectionScreen extends StatelessWidget {
         break;
       case 1:
         book = Book(2, getSecondBookItems(), "Videre mod dansk", "assets/book_vmd_cover.jpg");
+        break;
+      case 2:
+        book = Book(3, getThirdBookItems(), "Så kan du lære det", "assets/book_three_cover.jpeg");
         break;
     }
     return book;
@@ -176,7 +180,7 @@ class BookAudioTrackState extends State<BookAudioTracksScreen>
       onWillPop: _onWillPop,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Synope audio lessons'),
+          title: const Text('Let\'s learn danish'),
         ),
         body: Column(
           children: <Widget>[
@@ -187,17 +191,26 @@ class BookAudioTrackState extends State<BookAudioTracksScreen>
                       Divider(),
                   itemBuilder: (BuildContext context, int index) {
                     var track = book.items[index];
+                    final duration = getDuration(track);
                     String title = track.title;
                     int idx = track.title.indexOf("-");
-                    final lessonTitle = title.substring(0, idx).trim();
-                    final lessonName = title.substring(idx + 1).trim();
-                    final duration = getDuration(track);
+                    String itemTitle;
+                    String itemSubtitle;
+                    if (idx != -1) {
+                      itemTitle = title.substring(0, idx).trim() + " (" + duration + ")";
+                      itemSubtitle = title.substring(idx + 1).trim();
+                    }else{
+                      itemTitle = title.toLowerCase();
+                      itemSubtitle = "(" + duration + ")";
+                    }
+                    // final lessonTitle = title.substring(0, idx).trim();
+                    // final lessonName = title.substring(idx + 1).trim();
                     return ListTile(
                       contentPadding:
                           EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                       leading: Icon(Icons.audiotrack, color: Colors.red),
-                      title: Text(lessonTitle + " (" + duration + ")"),
-                      subtitle: Text(lessonName),
+                      title: Text(itemTitle),
+                      subtitle: Text(itemSubtitle),
                       onTap: () {
                         if (AudioService.running) {
                           AudioService.playMediaItem(track);
@@ -653,6 +666,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
           break;
         case 2:
           items = getSecondBookItems();
+          break;
+          case 3:
+          items = getThirdBookItems();
           break;
       }
 
